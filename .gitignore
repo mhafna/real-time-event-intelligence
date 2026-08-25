@@ -1,0 +1,66 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Java / Maven
+flink-java/target/
+*.class
+*.jar
+
+# IDE / OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Environment / credentials
+.env
+.env.*
+!.env.example
+
+# Raw / operational data
+data/
+
+# ML artifacts derived from operational data
+ml/models/
+ml/output/
+
+# Internal working notes
+docs/anomaly_detection_status_*.md
+docs/topology_status_*.md
+docs/day2_checkpoint.md
+
+# Development evidence containing raw identifiers
+evidence/
+
+# Logs / temporary output
+*.log
+logs/
+tmp/
+
+# Development backups
+flink-java/backup*/
+backup/
+backup*/
+*.bak
+*.backup
+
+# Local demo configuration
+docker-compose.yml
+
+# Operational reference data packaged with Flink
+flink-java/src/main/resources/reference/
+
+# ML model derived from operational data
+flink-java/src/main/resources/models/
+
+# Runtime outage state
+outage/open_outages.json
+
+# Development producer backups
+producer/replay_producer_v1_backup.py
+producer/replay_producer_full_backbone_working.py

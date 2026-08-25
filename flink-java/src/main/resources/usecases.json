@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    {
+      "name": "outage-intelligence",
+      "enabled": true,
+      "className": "com.esyasoft.eventintelligence.OutageIntelligencePlugin",
+      "outputTopic": "outage-incidents"
+    },
+    {
+      "name": "topology-inference",
+      "enabled": true,
+      "className": "com.esyasoft.eventintelligence.TopologyInferencePlugin",
+      "outputTopic": "topology-inference-results"
+    },
+    {
+      "name": "anomaly-detection",
+      "enabled": true,
+      "className": "com.esyasoft.eventintelligence.AnomalyDetectionPlugin",
+      "outputTopic": "anomaly-detection-results"
+    }
+  ]
+}
