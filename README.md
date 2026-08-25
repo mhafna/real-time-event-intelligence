@@ -1,117 +1,173 @@
-﻿# Real-Time Event Intelligence Platform
+# Real-Time Event Intelligence Platform
 
-A near-real-time smart-meter event analytics platform developed as part of a Software & Analytics internship at Esyasoft.
+> A modular near-real-time smart-meter analytics platform built with **Apache Kafka, Apache Flink, ClickHouse, Grafana, Python, Java and machine learning**.
 
-The platform simulates live smart-meter traffic from historical events, processes the stream through Apache Kafka and Apache Flink, applies modular operational and machine-learning analytics, persists results in ClickHouse, and visualizes outputs through Grafana.
+Developed as part of a Software & Analytics internship at Esyasoft, this project explores how raw smart-meter events can be transformed into operational intelligence through streaming ingestion, event-time processing, stateful analytics and ML-based detection.
 
-> **Data Note:** Operational event datasets, network hierarchy reference data, trained model artifacts, and other non-public project data used during development are intentionally excluded from this repository.
+The platform replays historical events as a simulated live stream, processes them through a reusable Flink pipeline, executes multiple analytical plugins, persists outputs in ClickHouse and visualizes results in Grafana.
+
+> **Data Privacy:** Operational datasets, network hierarchy data, trained model artifacts and other non-public project data are intentionally excluded from this repository.
 
 ---
 
-## Architecture
+## Platform Overview
 
-```text
-Historical Smart-Meter Events
-          |
-          v
-Python Replay Producer
-          |
-          v
-Apache Kafka
-          |
-          v
-Apache Flink
-   |-- Validation
-   |-- Enrichment
-   |-- Stateful Processing
-   |-- Feature Engineering
-   `-- Plugin-Based Analytics
-          |
-          v
-Kafka Result Topics
-          |
-          v
-ClickHouse
-          |
-          v
-Grafana
+```mermaid
+flowchart LR
+    A["Historical Smart-Meter Events"] --> B["Python Replay Producer"]
+    B --> C["Apache Kafka"]
+    C --> D["Apache Flink"]
+
+    D --> E["Validation"]
+    E --> F["Enrichment"]
+    F --> G["Stateful Processing"]
+    G --> H["Feature Engineering"]
+
+    H --> I["Plugin-Based Intelligence"]
+
+    I --> J["Outage Intelligence"]
+    I --> K["Supply Reliability"]
+    I --> L["Topology Inference"]
+    I --> M["ML Anomaly Detection"]
+
+    J --> N["Kafka Result Topics"]
+    K --> N
+    L --> N
+    M --> N
+
+    N --> O["ClickHouse"]
+    O --> P["Grafana"]
 ```
 
-The architecture separates event ingestion, stream processing, analytical logic, storage, and visualization so that multiple intelligence use cases can operate on the same enriched event stream.
+### Core Flow
+
+**Events → Kafka → Flink → Intelligence Plugins → ClickHouse → Grafana**
+
+The architecture separates ingestion, stream processing, analytical logic, storage and visualization so that multiple use cases can operate on the same enriched event stream.
 
 ---
 
 ## Technology Stack
 
-- Python
-- Java
-- Apache Kafka
-- Apache Flink
-- ClickHouse
-- Grafana
-- Docker
-- Docker Compose
-- scikit-learn
-- Maven
+| Layer | Technologies |
+|---|---|
+| Event Simulation | Python |
+| Streaming Backbone | Apache Kafka |
+| Stream Processing | Apache Flink, Java |
+| Feature Engineering | Flink event-time windows |
+| Machine Learning | Isolation Forest, scikit-learn |
+| Analytical Storage | ClickHouse |
+| Visualization | Grafana |
+| Infrastructure | Docker, Docker Compose |
+| Build Tool | Maven |
 
 ---
 
-## Core Streaming Pipeline
+## Streaming Processing Pipeline
 
-The platform uses Kafka as the event backbone and Apache Flink for event-time stream processing.
+Incoming smart-meter events pass through a reusable processing backbone before being exposed to analytical plugins.
 
-Incoming smart-meter events move through the following stages:
+```mermaid
+flowchart TD
+    A["Raw Event"] --> B["Validation"]
 
-1. Event validation
-2. Event-catalogue enrichment
-3. Network-topology enrichment
-4. Stateful stream processing
-5. 15-minute feature generation
-6. Plugin-based analytical use cases
-7. Kafka output topics
-8. ClickHouse persistence
-9. Grafana visualization
+    B --> C{"Valid Meter ID?"}
 
-This design allows the processing backbone to remain reusable while analytical use cases are implemented independently.
+    C -->|Yes| D["Event Catalogue Enrichment"]
+    C -->|No| E["Flag Invalid Event"]
+
+    D --> F["Network Hierarchy Enrichment"]
+    E --> F
+
+    F --> G["Event-Time Assignment"]
+    G --> H["Stateful Processing"]
+    H --> I["15-Minute Feature Windows"]
+    I --> J["Plugin Execution"]
+    J --> K["Kafka Output Topics"]
+    K --> L["ClickHouse Persistence"]
+```
+
+The shared pipeline handles:
+
+- event validation
+- event catalogue enrichment
+- network topology enrichment
+- event-time processing
+- stateful operations
+- reusable feature generation
+- plugin execution
+- downstream persistence
 
 ---
 
-## Plugin Architecture
+## Modular Plugin Architecture
 
-Analytical use cases are implemented as independent plugins operating on the same enriched Flink stream.
+The platform was designed so that new analytical use cases can be added without rebuilding the entire streaming pipeline.
 
-Plugin configuration is defined in:
+```mermaid
+flowchart LR
+    A["Enriched Event Stream"] --> B["Shared Processing Backbone"]
+
+    B --> C["Outage Intelligence Plugin"]
+    B --> D["Supply Reliability Analytics"]
+    B --> E["Topology Inference Plugin"]
+    B --> F["Anomaly Detection Plugin"]
+
+    C --> G["outage-incidents"]
+    D --> H["processed / reliability outputs"]
+    E --> I["topology-inference-results"]
+    F --> J["anomaly-detection-results"]
+```
+
+Plugin configuration is maintained in:
 
 ```text
 flink-java/src/main/resources/usecases.json
 ```
 
-Each enabled use case implements a common plugin interface and produces its own result stream.
-
-This makes it possible to introduce additional analytical use cases without rebuilding the core ingestion and processing architecture.
+Each analytical module operates independently on the enriched stream while sharing the same ingestion, validation and processing backbone.
 
 ---
 
-## Implemented Use Cases
+# Intelligence Use Cases
 
-### 1. Outage Intelligence
+## 1. Outage Intelligence
 
-Stateful stream-processing logic identifies:
+Stateful stream-processing logic identifies power-failure occurrences and restoration events while maintaining meter-level outage state.
 
-- power-failure occurrences
-- restoration events
-- active outages
-- unresolved outage conditions
+The use case supports:
 
-The pipeline maintains meter-level outage state and produces structured outage incidents for downstream reliability analysis.
+- power-failure detection
+- restoration detection
+- active outage tracking
+- unresolved outage identification
+- structured outage incident generation
+
+```mermaid
+sequenceDiagram
+    participant M as Smart Meter
+    participant K as Kafka
+    participant F as Flink
+    participant O as Outage State
+
+    M->>K: FAIL event
+    K->>F: Stream event
+    F->>O: Open outage
+
+    M->>K: RESTORE event
+    K->>F: Stream event
+    F->>O: Close outage
+
+    O-->>F: Outage incident
+```
 
 ---
 
-### 2. Supply Reliability Analytics
+## 2. Supply Reliability Analytics
 
-Processed outage events are persisted in ClickHouse and aggregated for operational monitoring through Grafana.
+Outage events are persisted in ClickHouse and aggregated for operational monitoring.
 
-The resulting views support analysis of:
+The resulting analytical layer supports investigation of:
 
 - outage frequency
 - active incidents
@@ -119,59 +175,120 @@ The resulting views support analysis of:
 - outage duration
 - network reliability behaviour
 
+### Operational Dashboard
+
+![Operational Outage Overview](dashboard/final/01_operational_outage_overview.png)
+
 ---
 
-### 3. Topology Inference
+## 3. Topology Inference
 
-A topology-inference plugin ranks likely feeder relationships for meters with uncertain topology information.
+The topology inference module evaluates likely feeder relationships for meters with incomplete or uncertain network information.
 
 Candidate ranking combines:
 
-- recent outage-event co-occurrence
-- geographic proximity
+- outage-event co-occurrence
+- geographic proximity evidence
 
-The resulting topology score is a **heuristic ranking score and should not be interpreted as a probability**.
+```mermaid
+flowchart TD
+    A["Meter with Uncertain Topology"] --> B["Recent Meter Events"]
 
-The use case demonstrates how streaming event behaviour can provide supporting evidence when network-topology information is incomplete or uncertain.
+    B --> C["Find Candidate Feeders"]
+    C --> D["Event Co-Occurrence Score"]
+    C --> E["Geographic Proximity Score"]
+
+    D --> F["Combined Ranking"]
+    E --> F
+
+    F --> G["Rank Candidate Feeders"]
+    G --> H["Suggested Feeder Relationship"]
+```
+
+The resulting topology score is a **heuristic ranking score rather than a probability**.
+
+### Topology & Network Reliability Dashboard
+
+![Topology and Network Reliability](dashboard/final/02_topology_network_reliability.png)
 
 ---
 
-### 4. ML Anomaly Detection
+## 4. ML Anomaly Detection
 
 An Isolation Forest model identifies unusual behaviour in streaming 15-minute smart-meter features.
 
-The active feature set includes:
-
-- `event_count_15m`
-- `avg_voltage_15m`
-- `voltage_range_15m`
-
-The model is trained offline in Python and exported into a portable representation that can be evaluated directly inside the Java/Flink runtime.
-
-Python and Java scoring implementations were validated for prediction parity during development.
-
----
-
-## Streaming Feature Engineering
-
-The shared feature pipeline creates 15-minute tumbling-window features including:
+### Feature Set
 
 ```text
 event_count_15m
 avg_voltage_15m
 voltage_range_15m
-power_failure_count_15m
 ```
 
-Processing uses event-time timestamps with bounded out-of-order handling.
+The ML workflow separates offline model development from streaming inference.
 
-These reusable features can be consumed by multiple downstream intelligence plugins.
+```mermaid
+flowchart LR
+    A["Historical Meter Events"] --> B["15-Minute Features"]
+    B --> C["Python Training"]
+    C --> D["Isolation Forest"]
+    D --> E["Portable Model Export"]
+
+    E --> F["Java / Flink Runtime"]
+    G["Streaming Feature Windows"] --> F
+
+    F --> H["Anomaly Score"]
+    H --> I{"Classification"}
+    I -->|Normal| J["NORMAL"]
+    I -->|Unusual| K["ANOMALY"]
+
+    J --> L["Kafka"]
+    K --> L
+    L --> M["ClickHouse"]
+    M --> N["Grafana"]
+```
+
+The Python and Java scoring implementations were validated for prediction parity during development.
+
+### ML Anomaly Detection Dashboard
+
+![ML Anomaly Detection](dashboard/final/03_anomaly_detection.png)
 
 ---
 
-## Kafka Topics
+# Shared Streaming Features
 
-The platform uses dedicated Kafka topics for different processing stages and analytical outputs.
+The Flink pipeline generates reusable 15-minute tumbling-window features:
+
+| Feature | Purpose |
+|---|---|
+| `event_count_15m` | Number of events within the window |
+| `avg_voltage_15m` | Mean voltage behaviour |
+| `voltage_range_15m` | Voltage variation within the window |
+| `power_failure_count_15m` | Power-failure activity |
+
+Processing uses **event-time timestamps** and bounded out-of-order handling.
+
+This feature layer can be reused across multiple downstream analytical plugins.
+
+---
+
+# Kafka Event Backbone
+
+Dedicated Kafka topics isolate different stages and analytical outputs.
+
+```mermaid
+flowchart TD
+    A["smart-meter-events"] --> B["Apache Flink"]
+
+    B --> C["processed-smart-meter-events"]
+    B --> D["meter-features-15m"]
+    B --> E["outage-incidents"]
+    B --> F["topology-inference-results"]
+    B --> G["anomaly-detection-results"]
+```
+
+### Main Topics
 
 ```text
 smart-meter-events
@@ -182,28 +299,25 @@ topology-inference-results
 anomaly-detection-results
 ```
 
-This keeps ingestion, processed events, features, and analytical outputs logically separated.
-
 ---
 
-## ClickHouse Persistence
+# ClickHouse Analytical Storage
 
-Streaming outputs are persisted using the pattern:
+Streaming results are persisted using a Kafka-to-ClickHouse pattern.
 
-```text
-Kafka Engine Table
-        |
-        v
-Materialized View
-        |
-        v
-MergeTree Table
+```mermaid
+flowchart LR
+    A["Kafka Result Topic"] --> B["Kafka Engine Table"]
+    B --> C["Materialized View"]
+    C --> D["MergeTree Table"]
+    D --> E["Analytical Queries"]
+    E --> F["Grafana"]
 ```
 
-Persisted datasets include:
+Persisted outputs include:
 
 - processed smart-meter events
-- 15-minute meter features
+- 15-minute feature windows
 - outage incidents
 - topology inference results
 - anomaly detection results
@@ -216,11 +330,11 @@ clickhouse/sql/
 
 ---
 
-## Grafana Dashboards
+# Grafana Analytics
 
-Grafana provides operational and analytical views across the streaming platform.
+Grafana provides the operational visualization layer for the platform.
 
-Dashboard coverage includes:
+Dashboard views include:
 
 - real-time event processing
 - outage monitoring
@@ -229,19 +343,7 @@ Dashboard coverage includes:
 - anomaly detection
 - anomaly-score ranking
 
-### Operational Outage Overview
-
-![Operational Outage Overview](dashboard/final/01_operational_outage_overview.png)
-
-### Topology and Network Reliability
-
-![Topology and Network Reliability](dashboard/final/02_topology_network_reliability.png)
-
-### ML Anomaly Detection
-
-![ML Anomaly Detection](dashboard/final/03_anomaly_detection.png)
-
-The exportable Grafana dashboard configuration is also included:
+The exportable dashboard configuration is included at:
 
 ```text
 dashboard/real_time_event_intelligence_dashboard.json
@@ -249,107 +351,135 @@ dashboard/real_time_event_intelligence_dashboard.json
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
 real-time-event-intelligence/
-|
-|-- clickhouse/
-|   `-- sql/
-|
-|-- dashboard/
-|   |-- final/
-|   `-- real_time_event_intelligence_dashboard.json
-|
-|-- enrichment/
-|
-|-- flink/
-|   `-- sql/
-|
-|-- flink-java/
-|   |-- pom.xml
-|   `-- src/
-|
-|-- ml/
-|   |-- train_isolation_forest.py
-|   |-- export_isolation_forest_json.py
-|   `-- validate_isolation_forest_json.py
-|
-|-- outage/
-|   `-- outage_service.py
-|
-|-- producer/
-|   `-- replay_producer.py
-|
-|-- docker-compose.example.yml
-|-- .env.example
-|-- requirements.txt
-`-- README.md
+│
+├── clickhouse/
+│   └── sql/
+│       ├── 01_event_intelligence_schema.sql
+│       └── 02_active_event_intelligence_schema.sql
+│
+├── dashboard/
+│   ├── final/
+│   │   ├── 01_operational_outage_overview.png
+│   │   ├── 02_topology_network_reliability.png
+│   │   └── 03_anomaly_detection.png
+│   │
+│   └── real_time_event_intelligence_dashboard.json
+│
+├── enrichment/
+│   └── enrichment_service.py
+│
+├── flink/
+│   └── sql/
+│
+├── flink-java/
+│   ├── pom.xml
+│   └── src/
+│       └── main/
+│           ├── java/
+│           └── resources/
+│
+├── ml/
+│   ├── train_isolation_forest.py
+│   ├── export_isolation_forest_json.py
+│   └── validate_isolation_forest_json.py
+│
+├── outage/
+│   └── outage_service.py
+│
+├── producer/
+│   └── replay_producer.py
+│
+├── docker-compose.example.yml
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Local Infrastructure
+# Local Infrastructure
 
-A sanitized Docker Compose configuration is provided as:
+A sanitized Docker Compose configuration is provided:
 
 ```text
 docker-compose.example.yml
 ```
 
-Environment-variable placeholders are provided in:
+Environment placeholders are available in:
 
 ```text
 .env.example
 ```
 
-Start the local infrastructure with:
+Start the infrastructure with:
 
 ```bash
 docker compose -f docker-compose.example.yml up -d
 ```
 
-Default local interfaces include:
+### Local Interfaces
 
-- Flink: `http://localhost:8081`
-- Grafana: `http://localhost:3000`
-- ClickHouse HTTP: `http://localhost:8123`
-- Kafka: `localhost:9092`
+| Service | Address |
+|---|---|
+| Apache Flink | `localhost:8081` |
+| Grafana | `localhost:3000` |
+| ClickHouse HTTP | `localhost:8123` |
+| Kafka | `localhost:9092` |
 
 ---
 
-## Flink Runtime
+# Flink Runtime
 
-The primary Java/Flink implementation is located under:
+The main streaming implementation is located in:
 
 ```text
 flink-java/
 ```
 
-The project uses Maven to build the Flink runtime.
+Build the Java runtime using Maven:
 
 ```bash
 cd flink-java
 mvn clean package
 ```
 
-The resulting runtime contains the shared processing pipeline and configurable analytical plugins.
+The runtime contains:
 
-Reference datasets and trained model artifacts used during the original development environment are intentionally not included in this public repository.
+- validation logic
+- event enrichment
+- hierarchy enrichment
+- event-time handling
+- stateful outage processing
+- feature generation
+- plugin loading
+- topology inference
+- ML anomaly scoring
+
+Reference datasets and trained model artifacts used during the original development environment are intentionally excluded.
 
 ---
 
-## Event Replay
+# Event Replay
 
-Historical smart-meter events were replayed as a simulated live stream using:
+Historical events are converted into a simulated live stream using:
 
 ```text
 producer/replay_producer.py
 ```
 
-The replay producer supports accelerated playback while preserving source event timestamps for Flink event-time processing.
+The producer:
 
-Example usage:
+- reads historical JSONL events
+- preserves original event timestamps
+- supports accelerated replay
+- publishes events to Kafka
+- records replay timestamps
+
+Example:
 
 ```bash
 python producer/replay_producer.py \
@@ -358,87 +488,96 @@ python producer/replay_producer.py \
   --timing-field ts
 ```
 
-The source dataset itself is not included in this repository.
+The operational source dataset is not included in this repository.
 
 ---
 
-## ML Workflow
+# ML Workflow
 
-The anomaly-detection workflow is separated into offline training and streaming inference.
-
-Python utilities include:
+The ML implementation is separated into training, export and runtime validation.
 
 ```text
-ml/train_isolation_forest.py
-ml/export_isolation_forest_json.py
-ml/validate_isolation_forest_json.py
+ml/
+├── train_isolation_forest.py
+├── export_isolation_forest_json.py
+└── validate_isolation_forest_json.py
 ```
 
-The workflow consists of:
+```mermaid
+flowchart TD
+    A["Generate Features"] --> B["Train Isolation Forest"]
+    B --> C["Export Model"]
+    C --> D["Load Model in Java"]
+    D --> E["Validate Python / Java Parity"]
+    E --> F["Streaming Inference in Flink"]
+```
 
-1. Generate 15-minute analytical features
-2. Train an Isolation Forest model in Python
-3. Export the model into a portable representation
-4. Load the representation in the Java/Flink runtime
-5. Score streaming feature windows
-6. Publish anomaly results to Kafka
-7. Persist results in ClickHouse
-8. Visualize anomaly behaviour in Grafana
-
-Trained artifacts derived from non-public operational data are intentionally excluded.
+This approach allows model development to remain in Python while production-style inference occurs directly inside the stream-processing runtime.
 
 ---
 
-## Safe Shutdown
+# Repository Scope & Privacy
 
-The active Flink job should be cancelled before shutting down the local infrastructure.
-
-The remaining services can then be stopped with:
-
-```bash
-docker compose -f docker-compose.example.yml stop
-```
-
-Persistent volumes should only be removed intentionally.
-
----
-
-## Repository Scope
-
-This repository focuses on the engineering implementation and selected non-sensitive project evidence.
+This repository focuses on the **engineering implementation and selected non-sensitive project evidence**.
 
 The following are intentionally excluded:
 
 - operational smart-meter event datasets
 - network hierarchy and master data
 - internal working documentation
-- trained models derived from operational data
+- trained model artifacts derived from operational data
 - runtime state files
 - credentials
-- local environment configuration
+- private environment configuration
 - temporary development outputs
-- backup source files
+- source-code backups
 
-The repository therefore demonstrates the system architecture, implementation approach, analytical logic, and dashboard outputs without publishing non-public operational data.
+This preserves the system architecture, analytical logic and implementation approach without exposing non-public operational information.
 
 ---
 
-## Key Outcomes
+# Key Outcomes
 
 The project demonstrates practical implementation of:
 
-- historical-to-real-time event replay
 - Kafka-based streaming ingestion
+- historical-to-real-time event replay
 - Apache Flink event-time processing
 - event validation and enrichment
-- stateful outage processing
-- reusable 15-minute feature engineering
+- network hierarchy enrichment
+- stateful outage detection
+- reusable feature engineering
 - modular plugin-based analytics
 - supply reliability analysis
 - topology inference
 - Isolation Forest anomaly detection
-- Python-to-Java ML model integration
+- Python-to-Java ML integration
 - ClickHouse analytical persistence
 - Grafana operational visualization
 
-Overall, the project explores how a reusable streaming architecture can transform raw smart-meter events into operational intelligence while supporting multiple analytical use cases on a shared event-processing backbone.
+---
+
+## Final System
+
+```mermaid
+flowchart LR
+    A["Meter Events"] --> B["Kafka"]
+    B --> C["Flink"]
+
+    C --> D["Outage"]
+    C --> E["Reliability"]
+    C --> F["Topology"]
+    C --> G["Anomaly Detection"]
+
+    D --> H["ClickHouse"]
+    E --> H
+    F --> H
+    G --> H
+
+    H --> I["Grafana"]
+
+    style C stroke-width:3px
+    style H stroke-width:3px
+```
+
+**One event-processing backbone. Multiple intelligence use cases. Real-time operational analytics.**
